@@ -10,6 +10,8 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
   const containerRef = useRef(null);
   const sigmaRef = useRef(null);
   const [webtoonData, setWebtoonData] = useState(null);
+  const [emotionData, setEmotionData] = useState(null);
+  const [tagData, setTagData] = useState(null);
   const [clusters, setClusters] = useState([]);
   const [clusterColors, setClusterColors] = useState({}); // 노드별 집단 색상 저장
 
@@ -52,6 +54,17 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
     // "A.I. 닥터" -> "A.I. 닥터"
     
     return normalized;
+  };
+
+  // 특수문자 정규화 함수 (매칭용)
+  const normalizeForMatching = (text) => {
+    return text
+      .replace(/[:：]/g, '') // 콜론 제거
+      .replace(/[()（）]/g, '') // 괄호 제거
+      .replace(/[.·]/g, '') // 점 제거
+      .replace(/!/g, '') // 느낌표 제거
+      .replace(/\s+/g, ' ') // 연속 공백을 하나로
+      .trim();
   };
 
   // 집단 찾기 알고리즘 (Louvain 방법)
@@ -160,7 +173,94 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
       }
     };
 
+    // 감정벡터 데이터 로드
+    const loadEmotionData = async () => {
+      try {
+        console.log('감정벡터 데이터 로딩 시작...');
+        const response = await fetch('/data/emotion_analysis_matrix_Top15.csv');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const csvText = await response.text();
+        console.log('CSV 텍스트 길이:', csvText.length);
+        console.log('CSV 첫 500자:', csvText.substring(0, 500));
+        
+        // CSV 파싱 (따옴표 처리)
+        const lines = csvText.split('\n');
+        console.log('CSV 라인 수:', lines.length);
+        
+        const emotionMap = {};
+        
+        // 헤더 파싱
+        const headers = parseCSVLine(lines[0]);
+        console.log('헤더:', headers);
+        const emotionColumns = headers.slice(1); // 첫 번째 컬럼은 이미지 이름
+        console.log('감정 컬럼 수:', emotionColumns.length);
+        
+        for (let i = 1; i < lines.length; i++) {
+          if (lines[i].trim()) {
+            const values = parseCSVLine(lines[i]);
+            const imageName = values[0]?.replace(/"/g, '').trim();
+            
+            if (imageName) {
+              // 감정벡터 생성
+              const emotionVector = {};
+              emotionColumns.forEach((emotion, index) => {
+                const rawValue = values[index + 1]?.replace(/"/g, '').replace(/%/g, '') || '0';
+                const value = parseFloat(rawValue) / 100 || 0; // 퍼센트를 소수로 변환
+                emotionVector[emotion] = value;
+              });
+              
+              emotionMap[imageName] = emotionVector;
+            }
+          }
+        }
+        
+        console.log('감정벡터 데이터 로드 완료:', Object.keys(emotionMap).length, '개');
+        console.log('감정벡터 키 샘플:', Object.keys(emotionMap).slice(0, 5));
+        setEmotionData(emotionMap);
+      } catch (error) {
+        console.error('감정벡터 데이터 로드 실패:', error);
+        console.error('에러 상세:', error.message);
+      }
+    };
+
+    // 태그 데이터 로드
+    const loadTagData = async () => {
+      try {
+        const response = await fetch('/data/webtoon_day_rank_title_Tag_Top15.csv');
+        const csvText = await response.text();
+        
+        // CSV 파싱 (따옴표 처리)
+        const lines = csvText.split('\n');
+        const tagMap = {};
+        
+        for (let i = 1; i < lines.length; i++) {
+          if (lines[i].trim()) {
+            const values = parseCSVLine(lines[i]);
+            const title = values[0]?.replace(/"/g, '').trim();
+            const tags = values[1]?.replace(/"/g, '').trim();
+            
+            if (title && tags) {
+              // 태그를 배열로 변환
+              const tagArray = tags.split(',').map(tag => tag.trim().replace('#', ''));
+              tagMap[title] = tagArray;
+            }
+          }
+        }
+        
+        setTagData(tagMap);
+        console.log('태그 데이터 로드 완료:', Object.keys(tagMap).length, '개');
+      } catch (error) {
+        console.error('태그 데이터 로드 실패:', error);
+      }
+    };
+
     loadWebtoonData();
+    loadEmotionData();
+    loadTagData();
   }, []);
 
   useEffect(() => {
@@ -260,7 +360,10 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
           size: 6,
           color: '#03c75a',
           labelColor: '#000000',
-          labelSize: 12
+          labelSize: 12,
+          labelWeight: 'bold',
+          labelBackgroundColor: '#ffffff',
+          labelBackgroundOpacity: 0.9
         });
       });
 
@@ -285,7 +388,7 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
       const degrees = graph.nodes().map((node) => graph.degree(node));
       const minDegree = Math.min(...degrees);
       const maxDegree = Math.max(...degrees);
-      const minSize = 3, maxSize = 9; // 최대 크기를 15에서 9로 줄임 (60%)
+      const minSize = 2, maxSize = 6; // 최소 크기 2, 최대 크기 6으로 조정
       
       // 원래 크기 정보 저장
       const originalSizes = {};
@@ -360,16 +463,18 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
         enableNodeHovering: true,
         enableMouseWheel: true,
         enableCamera: true,
-        minCameraRatio: 0.1,
-        maxCameraRatio: 10,
+        minCameraRatio: 0.05,
+        maxCameraRatio: 20,
         renderEdgeLabels: false, // 엣지 라벨 비활성화로 성능 향상
         labelSize: 'fixed',
         labelDensity: 1.0, // 모든 라벨 표시
         labelGridCellSize: 60,
-        labelRenderedSizeThreshold: 0, // 모든 크기에서 라벨 표시
+        labelRenderedSizeThreshold: -1, // 모든 크기에서 라벨 표시 (음수로 설정하여 강제 표시)
         labelColor: '#000000', // 라벨 색상을 검정으로 명시
         labelBackgroundColor: '#ffffff', // 라벨 배경색을 흰색으로 설정
-        labelBackgroundOpacity: 0.8 // 라벨 배경 투명도
+        labelBackgroundOpacity: 0.9, // 라벨 배경 투명도 증가
+        labelSize: 12, // 라벨 크기 명시적 설정
+        labelWeight: 'bold' // 라벨 굵기 설정
       });
 
       sigmaRef.current = sigma;
@@ -435,23 +540,55 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
         // 1차: 정확한 매칭
         let thumbnail = webtoonData[nodeTitle];
         
-        // 2차: 특수문자 제거 후 매칭 (콜론, 점, 공백 등)
         if (!thumbnail) {
-          const normalizedTitle = nodeTitle
-            .replace(/[:：]/g, '') // 콜론 제거
-            .replace(/[.·]/g, '') // 점 제거
-            .replace(/\s+/g, ' ') // 연속 공백을 하나로
-            .trim();
+          // 2차: 콜론 제거
+          const withoutColon = nodeTitle.replace(/[:：]/g, '');
+          thumbnail = webtoonData[withoutColon];
           
-          thumbnail = webtoonData[normalizedTitle];
-          
-          // 3차: 부분 매칭
           if (!thumbnail) {
-            const partialMatch = Object.keys(webtoonData).find(key => 
-              key.includes(normalizedTitle) || normalizedTitle.includes(key)
-            );
-            if (partialMatch) {
-              thumbnail = webtoonData[partialMatch];
+            // 3차: 괄호 제거
+            const withoutBrackets = nodeTitle.replace(/[()（）]/g, '');
+            thumbnail = webtoonData[withoutBrackets];
+            
+            if (!thumbnail) {
+              // 4차: 점 제거
+              const withoutDots = nodeTitle.replace(/[.·]/g, '');
+              thumbnail = webtoonData[withoutDots];
+              
+              if (!thumbnail) {
+                // 5차: 쉼표 추가 (특정 패턴들)
+                const withComma1 = nodeTitle.replace(/(50살)(\s+)(이혼)/, '$1, $3');
+                thumbnail = webtoonData[withComma1];
+                
+                if (!thumbnail) {
+                  const withComma2 = nodeTitle.replace(/(풍작이에요)(\s+)(마왕님)/, '$1, $3');
+                  thumbnail = webtoonData[withComma2];
+                  
+                  if (!thumbnail) {
+                    // 6차: 느낌표 추가
+                    const withExclamation = nodeTitle + '!';
+                    thumbnail = webtoonData[withExclamation];
+                    
+                    if (!thumbnail) {
+                      // 7차: 쉼표 + 느낌표 추가
+                      const withCommaAndExclamation = nodeTitle.replace(/(풍작이에요)(\s+)(마왕님)/, '$1, $3') + '!';
+                      thumbnail = webtoonData[withCommaAndExclamation];
+                      
+                      if (!thumbnail) {
+                        // 8차: 부분 매칭 (가장 유사한 제목 찾기)
+                        const partialMatch = Object.keys(webtoonData).find(key => {
+                          const keyNormalized = normalizeForMatching(key);
+                          const nodeNormalized = normalizeForMatching(nodeTitle);
+                          return keyNormalized === nodeNormalized;
+                        });
+                        if (partialMatch) {
+                          thumbnail = webtoonData[partialMatch];
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -464,7 +601,8 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
           유사한제목들: Object.keys(webtoonData).filter(key => 
             key.includes(nodeTitle) || nodeTitle.includes(key)
           ).slice(0, 5), // 처음 5개만 표시
-          정확한매칭: Object.keys(webtoonData).find(key => key === nodeTitle)
+          정확한매칭: Object.keys(webtoonData).find(key => key === nodeTitle),
+          전체웹툰데이터키: Object.keys(webtoonData).slice(0, 10) // 처음 10개만 표시
         });
         
         // 연결된 노드들 찾기
@@ -711,11 +849,353 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
                     <span className="cluster-count">({cluster.length}개 노드)</span>
                   </div>
                   <div className="cluster-nodes">
-                    {cluster.map((nodeId, nodeIndex) => (
-                      <span key={nodeIndex} className="cluster-node">
-                        {normalizeNodeName(nodeId)}
-                      </span>
-                    ))}
+                    {cluster.map((nodeId, nodeIndex) => {
+                      const nodeTitle = normalizeNodeName(nodeId);
+                      const imageName = nodeId + '.jpg';
+                      
+                                            // 썸네일 찾기 (포괄적인 매칭 로직)
+                      let thumbnail = webtoonData?.[nodeTitle];
+                      
+                      // 디버깅을 위한 매칭 과정 로그
+                      const matchingSteps = [];
+                      
+                      if (!thumbnail) {
+                        // 1차: 콜론 제거
+                        const withoutColon = nodeTitle.replace(/[:：]/g, '');
+                        thumbnail = webtoonData?.[withoutColon];
+                        matchingSteps.push(`1차(콜론제거): "${withoutColon}" -> ${!!thumbnail}`);
+                        
+                        if (!thumbnail) {
+                          // 2차: 괄호 제거
+                          const withoutBrackets = nodeTitle.replace(/[()（）]/g, '');
+                          thumbnail = webtoonData?.[withoutBrackets];
+                          matchingSteps.push(`2차(괄호제거): "${withoutBrackets}" -> ${!!thumbnail}`);
+                          
+                          if (!thumbnail) {
+                            // 3차: 점 제거
+                            const withoutDots = nodeTitle.replace(/[.·]/g, '');
+                            thumbnail = webtoonData?.[withoutDots];
+                            matchingSteps.push(`3차(점제거): "${withoutDots}" -> ${!!thumbnail}`);
+                            
+                            if (!thumbnail) {
+                              // 4차: 쉼표 추가 (특정 패턴들)
+                              const withComma1 = nodeTitle.replace(/(50살)(\s+)(이혼)/, '$1, $3');
+                              thumbnail = webtoonData?.[withComma1];
+                              matchingSteps.push(`4차(쉼표추가1): "${withComma1}" -> ${!!thumbnail}`);
+                              
+                              if (!thumbnail) {
+                                const withComma2 = nodeTitle.replace(/(풍작이에요)(\s+)(마왕님)/, '$1, $3');
+                                thumbnail = webtoonData?.[withComma2];
+                                matchingSteps.push(`4차(쉼표추가2): "${withComma2}" -> ${!!thumbnail}`);
+                                
+                                if (!thumbnail) {
+                                  // 5차: 느낌표 추가
+                                  const withExclamation = nodeTitle + '!';
+                                  thumbnail = webtoonData?.[withExclamation];
+                                  matchingSteps.push(`5차(느낌표추가): "${withExclamation}" -> ${!!thumbnail}`);
+                                  
+                                  if (!thumbnail) {
+                                    // 6차: 쉼표 + 느낌표 추가
+                                    const withCommaAndExclamation = nodeTitle.replace(/(풍작이에요)(\s+)(마왕님)/, '$1, $3') + '!';
+                                    thumbnail = webtoonData?.[withCommaAndExclamation];
+                                    matchingSteps.push(`6차(쉼표+느낌표): "${withCommaAndExclamation}" -> ${!!thumbnail}`);
+                                    
+                                    if (!thumbnail) {
+                                      // 7차: 부분 매칭 (가장 유사한 제목 찾기)
+                                      const partialMatch = Object.keys(webtoonData).find(key => {
+                                        const keyNormalized = normalizeForMatching(key);
+                                        const nodeNormalized = normalizeForMatching(nodeTitle);
+                                        return keyNormalized === nodeNormalized;
+                                      });
+                                      if (partialMatch) {
+                                        thumbnail = webtoonData[partialMatch];
+                                        matchingSteps.push(`7차(부분매칭): "${partialMatch}" -> ${!!thumbnail}`);
+                                      } else {
+                                        matchingSteps.push(`7차(부분매칭): 실패`);
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      } else {
+                        matchingSteps.push(`0차(정확매칭): "${nodeTitle}" -> true`);
+                      }
+                      
+                      // 매칭 실패 시 상세 로그 출력
+                      if (!thumbnail) {
+                        console.log('매칭 실패 상세:', {
+                          노드제목: nodeTitle,
+                          매칭단계: matchingSteps,
+                          원본데이터키: Object.keys(webtoonData).filter(key => 
+                            key.includes('풍작') || key.includes('마왕')
+                          )
+                        });
+                      }
+                      
+                      // 태그 찾기 (요일_순위_제목 형태로 매칭)
+                      let tags = [];
+                      let tagKey = nodeId; // nodeId는 이미 요일_순위_제목 형태
+                      
+                      // 1차: 정확한 매칭
+                      if (tagData?.[tagKey]) {
+                        tags = tagData[tagKey];
+                      } else {
+                        // 2차: 콜론 제거
+                        const withoutColon = nodeTitle.replace(/[:：]/g, '');
+                        tagKey = nodeId.replace(nodeTitle, withoutColon);
+                        if (tagData?.[tagKey]) {
+                          tags = tagData[tagKey];
+                        } else {
+                          // 3차: 괄호 제거
+                          const withoutBrackets = nodeTitle.replace(/[()（）]/g, '');
+                          tagKey = nodeId.replace(nodeTitle, withoutBrackets);
+                          if (tagData?.[tagKey]) {
+                            tags = tagData[tagKey];
+                          } else {
+                            // 4차: 점 제거
+                            const withoutDots = nodeTitle.replace(/[.·]/g, '');
+                            tagKey = nodeId.replace(nodeTitle, withoutDots);
+                            if (tagData?.[tagKey]) {
+                              tags = tagData[tagKey];
+                            } else {
+                              // 5차: 쉼표 추가
+                              const withComma1 = nodeTitle.replace(/(50살)(\s+)(이혼)/, '$1, $3');
+                              tagKey = nodeId.replace(nodeTitle, withComma1);
+                              if (tagData?.[tagKey]) {
+                                tags = tagData[tagKey];
+                              } else {
+                                const withComma2 = nodeTitle.replace(/(풍작이에요)(\s+)(마왕님)/, '$1, $3');
+                                tagKey = nodeId.replace(nodeTitle, withComma2);
+                                if (tagData?.[tagKey]) {
+                                  tags = tagData[tagKey];
+                                } else {
+                                  // 6차: 느낌표 추가
+                                  const withExclamation = nodeTitle + '!';
+                                  tagKey = nodeId.replace(nodeTitle, withExclamation);
+                                  if (tagData?.[tagKey]) {
+                                    tags = tagData[tagKey];
+                                  } else {
+                                    // 7차: 쉼표 + 느낌표 추가
+                                    const withCommaAndExclamation = nodeTitle.replace(/(풍작이에요)(\s+)(마왕님)/, '$1, $3') + '!';
+                                    tagKey = nodeId.replace(nodeTitle, withCommaAndExclamation);
+                                    if (tagData?.[tagKey]) {
+                                      tags = tagData[tagKey];
+                                    } else {
+                                      // 8차: 부분 매칭 (요일_순위_ 제거 후 매칭)
+                                      const partialMatch = Object.keys(tagData).find(key => {
+                                        const keyWithoutPrefix = key.replace(/^[a-z]{3}_\d+_/, '');
+                                        const nodeNormalized = normalizeForMatching(nodeTitle);
+                                        const keyNormalized = normalizeForMatching(keyWithoutPrefix);
+                                        return keyNormalized === nodeNormalized;
+                                      });
+                                      if (partialMatch) {
+                                        tags = tagData[partialMatch];
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      
+                      // 감정벡터 찾기 (nodeId 기반으로 매칭)
+                      let emotions = {};
+                      let emotionKey = nodeId + '.jpg'; // nodeId는 이미 요일_순위_제목 형태
+                      
+                      // 1차: 정확한 매칭
+                      if (emotionData?.[emotionKey]) {
+                        emotions = emotionData[emotionKey];
+                      } else {
+                        // 2차: 콜론 제거
+                        const withoutColon = nodeTitle.replace(/[:：]/g, '');
+                        emotionKey = nodeId.replace(nodeTitle, withoutColon) + '.jpg';
+                        if (emotionData?.[emotionKey]) {
+                          emotions = emotionData[emotionKey];
+                        } else {
+                          // 3차: 괄호 제거
+                          const withoutBrackets = nodeTitle.replace(/[()（）]/g, '');
+                          emotionKey = nodeId.replace(nodeTitle, withoutBrackets) + '.jpg';
+                          if (emotionData?.[emotionKey]) {
+                            emotions = emotionData[emotionKey];
+                          } else {
+                            // 4차: 점 제거
+                            const withoutDots = nodeTitle.replace(/[.·]/g, '');
+                            emotionKey = nodeId.replace(nodeTitle, withoutDots) + '.jpg';
+                            if (emotionData?.[emotionKey]) {
+                              emotions = emotionData[emotionKey];
+                            } else {
+                              // 5차: 쉼표 제거 (이미 콤마가 있는 경우)
+                              const withoutComma = nodeTitle.replace(/,/g, '');
+                              emotionKey = nodeId.replace(nodeTitle, withoutComma) + '.jpg';
+                              if (emotionData?.[emotionKey]) {
+                                emotions = emotionData[emotionKey];
+                              } else {
+                                // 6차: 쉼표 추가 (콤마가 없는 경우)
+                                const withComma1 = nodeTitle.replace(/(50살)(\s+)(이혼)/, '$1, $3');
+                                emotionKey = nodeId.replace(nodeTitle, withComma1) + '.jpg';
+                                if (emotionData?.[emotionKey]) {
+                                  emotions = emotionData[emotionKey];
+                                } else {
+                                  const withComma2 = nodeTitle.replace(/(풍작이에요)(\s+)(마왕님)/, '$1, $3');
+                                  emotionKey = nodeId.replace(nodeTitle, withComma2) + '.jpg';
+                                  if (emotionData?.[emotionKey]) {
+                                    emotions = emotionData[emotionKey];
+                                  } else {
+                                    // 7차: 느낌표 추가
+                                    const withExclamation = nodeTitle + '!';
+                                    emotionKey = nodeId.replace(nodeTitle, withExclamation) + '.jpg';
+                                    if (emotionData?.[emotionKey]) {
+                                      emotions = emotionData[emotionKey];
+                                    } else {
+                                      // 8차: 쉼표 + 느낌표 추가
+                                      const withCommaAndExclamation = nodeTitle.replace(/(풍작이에요)(\s+)(마왕님)/, '$1, $3') + '!';
+                                      emotionKey = nodeId.replace(nodeTitle, withCommaAndExclamation) + '.jpg';
+                                      if (emotionData?.[emotionKey]) {
+                                        emotions = emotionData[emotionKey];
+                                      } else {
+                                        // 9차: 부분 매칭 (요일_순위_ 제거 후 매칭)
+                                        const partialMatch = Object.keys(emotionData).find(key => {
+                                          const keyWithoutPrefix = key.replace(/^[a-z]{3}_\d+_/, '').replace('.jpg', '');
+                                          const nodeNormalized = normalizeForMatching(nodeTitle);
+                                          const keyNormalized = normalizeForMatching(keyWithoutPrefix);
+                                          return keyNormalized === nodeNormalized;
+                                        });
+                                        if (partialMatch) {
+                                          emotions = emotionData[partialMatch];
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      
+                      // 디버깅 로그 (매칭 실패 시에만)
+                      if (!thumbnail || Object.keys(emotions).length === 0) {
+                        console.log('매칭 디버깅:', {
+                          노드ID: nodeId,
+                          노드제목: nodeTitle,
+                          썸네일찾음: !!thumbnail,
+                          감정벡터찾음: Object.keys(emotions).length > 0,
+                          감정벡터키: emotionKey,
+                          원본데이터키: Object.keys(webtoonData).slice(0, 5),
+                          감정데이터키: Object.keys(emotionData).slice(0, 5),
+                          태그찾음: tags.length > 0
+                        });
+                      }
+                      
+                      return (
+                        <span 
+                          key={nodeIndex} 
+                          className="cluster-node"
+                          onMouseEnter={(e) => {
+                            // 상세 정보 툴팁 표시
+                            const tooltip = document.createElement('div');
+                            tooltip.className = 'cluster-node-tooltip';
+                            tooltip.innerHTML = `
+                              <div class="tooltip-header">
+                                <strong>${nodeTitle}</strong>
+                              </div>
+                              ${thumbnail ? `
+                                <div class="tooltip-image">
+                                  <img src="${thumbnail}" alt="${nodeTitle}" />
+                                </div>
+                              ` : ''}
+                              ${tags.length > 0 ? `
+                                <div class="tooltip-tags">
+                                  <strong>태그:</strong><br>
+                                  ${tags.map(tag => `<span class="tag">#${tag}</span>`).join(' ')}
+                                </div>
+                              ` : ''}
+                              ${Object.keys(emotions).length > 0 ? `
+                                <div class="tooltip-emotions">
+                                  <strong>🎭 감정벡터 (상위 5개)</strong><br>
+                                  <div class="emotion-list">
+                                    ${Object.entries(emotions)
+                                      .sort(([,a], [,b]) => b - a)
+                                      .slice(0, 5)
+                                      .map(([emotion, value], index) => {
+                                        const percentage = (value * 100).toFixed(1);
+                                        const intensity = Math.min(100, percentage * 2);
+                                        return `
+                                          <div class="emotion-item">
+                                            <span class="emotion-name">${emotion}</span>
+                                            <div class="emotion-bar">
+                                              <div class="emotion-fill" style="width: ${intensity}%"></div>
+                                            </div>
+                                            <span class="emotion-value">${percentage}%</span>
+                                          </div>
+                                        `;
+                                      }).join('')}
+                                  </div>
+                                </div>
+                              ` : ''}
+                            `;
+                            
+                            // 툴팁 스타일 설정
+                            tooltip.style.cssText = `
+                              position: absolute;
+                              background: rgba(0, 0, 0, 0.95);
+                              color: white;
+                              padding: 15px;
+                              border-radius: 8px;
+                              font-size: 12px;
+                              max-width: 300px;
+                              z-index: 10000;
+                              box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+                              pointer-events: none;
+                            `;
+                            
+                            document.body.appendChild(tooltip);
+                            
+                            // 툴팁 위치 설정 (마우스 커서 오른쪽 위에 표시)
+                            const mouseX = e.clientX;
+                            const mouseY = e.clientY;
+                            const tooltipWidth = 300;
+                            const tooltipHeight = 250;
+                            
+                            // 스크롤 위치 고려
+                            const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+                            const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+                            
+                            // 기본 위치: 마우스 커서가 툴팁의 하단 좌측에 위치
+                            let left = mouseX+30;
+                            let top = mouseY - tooltipHeight-100;
+                          
+                            
+                            if (left < 10) left = 10;
+                            if (left + tooltipWidth > window.innerWidth) left = window.innerWidth - tooltipWidth - 10;
+                            // if (top < 10) top = mouseY + 10; // 너무 위로 가면 마우스 아래에 표시
+                            
+                            
+                            // 절대 위치로 설정
+                            tooltip.style.position = 'fixed';
+                            tooltip.style.left = left + 'px';
+                            tooltip.style.top = top + 'px';                            
+                            
+                            // 마우스 이벤트 저장
+                            e.target._tooltip = tooltip;
+                          }}
+                          onMouseLeave={(e) => {
+                            // 툴팁 제거
+                            if (e.target._tooltip) {
+                              e.target._tooltip.remove();
+                              e.target._tooltip = null;
+                            }
+                          }}
+                        >
+                          {nodeTitle}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               );
