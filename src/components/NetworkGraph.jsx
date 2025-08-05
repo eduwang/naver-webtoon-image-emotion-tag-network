@@ -1124,12 +1124,11 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
                                       .slice(0, 5)
                                       .map(([emotion, value], index) => {
                                         const percentage = (value * 100).toFixed(1);
-                                        const intensity = Math.min(100, percentage * 2);
                                         return `
                                           <div class="emotion-item">
-                                            <span class="emotion-name">${emotion}</span>
+                                            <span class="emotion-name">${emotion}:</span>
                                             <div class="emotion-bar">
-                                              <div class="emotion-fill" style="width: ${intensity}%"></div>
+                                              <div class="emotion-fill" style="width: ${percentage}%"></div>
                                             </div>
                                             <span class="emotion-value">${percentage}%</span>
                                           </div>

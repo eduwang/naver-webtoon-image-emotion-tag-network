@@ -11,6 +11,15 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [showWebtoonClusters, setShowWebtoonClusters] = useState(false);
   const [showEmotionClusters, setShowEmotionClusters] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const handleCarouselNext = () => {
+    setCurrentSlide((prev) => (prev + 1) % 2);
+  };
+
+  const handleCarouselPrev = () => {
+    setCurrentSlide((prev) => (prev - 1 + 2) % 2);
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -63,6 +72,9 @@ function App() {
                 특히 웹툰의 표지 색상은 독자가 스토리를 읽기 전부터 작품에 대한 감정적 반응을 유도하며, 
                 감정 표현과 이미지의 연결은 독자에게 강력한 첫인상을 남긴다. 연구는 색채를 통해 전달되는 
                 감정적 인상이 작품의 장르적 특성과 어떻게 맞물리는지에 주목한다.
+              </p>
+              <p>
+                본 연구는 이미지 속 색상이 인간의 감정에 미치는 영향, 특히 색채가 시각적 경험과 감정적 반응을 어떻게 연결하는지를 탐구하고자 하였다. 이를 위해 웹툰 표지 이미지와 장르 태그를 수집하여 색상 경향을 분석하고, 감정 표현을 벡터로 수치화하였다. 이후 수집한 웹툰 태그와 이미지 감정을 자카드 유사도로 계산하여 태그·감정 이미지 네트워크를 구축하고, 색상·이미지·감정 간 상호작용을 시각화하였다.
               </p>
               <p>
                 이를 통해 우리는 특정 웹툰이 왜 더 주목을 받는지, 또는 유사한 감정을 주는 작품들이 
@@ -240,36 +252,155 @@ function App() {
           <section className="section">
             <h2 className="section-title">연구 결과</h2>
             <div className="content">
-              <h3>주요 발견사항</h3>
-              <ul>
-                <li>웹툰에서 가장 빈번하게 나타나는 감정 태그</li>
-                <li>감정 태그 간의 연결 패턴</li>
-                <li>장르별 감정적 특성의 차이</li>
-              </ul>
-              
-              <h3>통계적 분석</h3>
-              <div className="stats-grid">
-                <div className="stat-item">
-                  <span className="stat-number">{webtoonData.length}</span>
-                  <span className="stat-label">웹툰 태그 연결 수</span>
+              <h3>등장 태그 빈도수 Top 10</h3>
+              <div className="top-tags-container">
+                <div className="carousel-container">
+                  <button className="carousel-btn prev-btn" onClick={() => handleCarouselPrev()}>
+                    <span>‹</span>
+                  </button>
+                  
+                  <div className="carousel-wrapper">
+                    <div className="carousel-track" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+                      <div className="carousel-slide">
+                        <div className="slide-content">
+                          <div className="tags-row">
+                            <div className="carousel-tag-card">
+                              <div className="rank-badge">1</div>
+                              <div className="tag-info">
+                                <div className="carousel-tag-name">소설원작</div>
+                                <div className="tag-count">44회</div>
+                              </div>
+                            </div>
+                            <div className="carousel-tag-card">
+                              <div className="rank-badge">2</div>
+                              <div className="tag-info">
+                                <div className="carousel-tag-name">먼치킨</div>
+                                <div className="tag-count">32회</div>
+                              </div>
+                            </div>
+                            <div className="carousel-tag-card">
+                              <div className="rank-badge">3</div>
+                              <div className="tag-info">
+                                <div className="carousel-tag-name">액션</div>
+                                <div className="tag-count">30회</div>
+                              </div>
+                            </div>
+                            <div className="carousel-tag-card">
+                              <div className="rank-badge">4</div>
+                              <div className="tag-info">
+                                <div className="carousel-tag-name">판타지</div>
+                                <div className="tag-count">29회</div>
+                              </div>
+                            </div>
+                            <div className="carousel-tag-card">
+                              <div className="rank-badge">5</div>
+                              <div className="tag-info">
+                                <div className="carousel-tag-name">무협/사극</div>
+                                <div className="tag-count">24회</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="carousel-slide">
+                        <div className="slide-content">
+                          <div className="tags-row">
+                            <div className="carousel-tag-card">
+                              <div className="rank-badge">6</div>
+                              <div className="tag-info">
+                                <div className="carousel-tag-name">드라마</div>
+                                <div className="tag-count">23회</div>
+                              </div>
+                            </div>
+                            <div className="carousel-tag-card">
+                              <div className="rank-badge">7</div>
+                              <div className="tag-info">
+                                <div className="carousel-tag-name">사이다</div>
+                                <div className="tag-count">18회</div>
+                              </div>
+                            </div>
+                            <div className="carousel-tag-card">
+                              <div className="rank-badge">8</div>
+                              <div className="tag-info">
+                                <div className="carousel-tag-name">자극적인</div>
+                                <div className="tag-count">17회</div>
+                              </div>
+                            </div>
+                            <div className="carousel-tag-card">
+                              <div className="rank-badge">8</div>
+                              <div className="tag-info">
+                                <div className="carousel-tag-name">복수극</div>
+                                <div className="tag-count">17회</div>
+                              </div>
+                            </div>
+                            <div className="carousel-tag-card">
+                              <div className="rank-badge">10</div>
+                              <div className="tag-info">
+                                <div className="carousel-tag-name">로맨스</div>
+                                <div className="tag-count">16회</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button className="carousel-btn next-btn" onClick={() => handleCarouselNext()}>
+                    <span>›</span>
+                  </button>
                 </div>
-                <div className="stat-item">
-                  <span className="stat-number">{emotionData.length}</span>
-                  <span className="stat-label">이미지 감정 연결 수</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-number">
-                    {new Set([...webtoonData.map(d => d.Source1), ...webtoonData.map(d => d.Source2)]).size}
-                  </span>
-                  <span className="stat-label">웹툰 태그 노드 수</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-number">
-                    {new Set([...emotionData.map(d => d.Source1), ...emotionData.map(d => d.Source2)]).size}
-                  </span>
-                  <span className="stat-label">이미지 감정 노드 수</span>
+                
+                <div className="carousel-dots">
+                  <button 
+                    className={`dot ${currentSlide === 0 ? 'active' : ''}`} 
+                    onClick={() => setCurrentSlide(0)}
+                  ></button>
+                  <button 
+                    className={`dot ${currentSlide === 1 ? 'active' : ''}`} 
+                    onClick={() => setCurrentSlide(1)}
+                  ></button>
                 </div>
               </div>
+              
+              <h3>웹툰 태그 네트워크 분석 결과</h3>
+              <p>
+                웹툰 태그 네트워크 분석 결과, 각 집단(community)에서는 뚜렷한 주제적 공통점이 나타났다.
+              </p>
+              
+              <div className="community-analysis">
+                <p className="community-paragraph">
+                  집단 1에서는 '<span className="highlight">#자극적인</span>' 태그를 중심으로, 스릴러, 로맨스, 일상물 등 다양한 장르의 웹툰이 엮이는 양상을 보였다. 이는 자극적인 요소가 장르를 가리지 않고 여러 작품에서 독자들의 관심을 끌고 있음을 시사한다. 집단 2와 집단 3에서는 각각 '<span className="highlight">#액션, #사이다</span>', 그리고 '<span className="highlight">#무협/사극, #액션</span>' 태그가 주요하게 등장했다. 이는 액션성, 통쾌함, 무협적 요소가 뚜렷한 작품들이 하나의 그룹을 이루며, 유사한 독자 취향을 반영함을 보여준다. 집단 4는 '<span className="highlight">#판타지</span>' 태그가 중심이며, 다수의 작품이 '<span className="highlight">#소설원작</span>'임이 특징적이었다. 이는 소설을 기반으로 한 판타지물이 하나의 거대한 네트워크를 형성하고 있음을 의미한다. 집단 5는 '<span className="highlight">#액션+판타지</span>'의 융합 장르가 주를 이루었고, 집단 6에서는 '<span className="highlight">#일상물, #힐링, #개그, #공감</span>'과 같이 가볍고 따뜻한 분위기의 작품들이 모여 있어, 감정적 친근감이나 위로를 제공하는 특성이 두드러졌다. 한편, 집단 7은 '<span className="highlight">#드라마, #직업드라마</span>' 중심, 집단 8은 '<span className="highlight">#로맨스</span>'가 주된 공통점으로 나타나 각 집단별로 뚜렷한 장르적 색채가 드러났다.
+                </p>
+              </div>
+              
+              <h3>이미지 감정 네트워크 분석 결과</h3>
+              <p>
+                웹툰 표지의 감정 이미지 네트워크 분석에서도 각 집단마다 뚜렷한 분위기가 확인되었다.
+              </p>
+              
+              <div className="emotion-analysis">
+                <p className="emotion-paragraph">
+                  집단 1은 인물들의 지루하거나 무표정한 표정이 반복적으로 등장해, 정적이거나 무미건조한 분위기가 특징이었다. 집단 2와 집단 3에서는 '권위(authority)', '아우라', '미스터리', '판타지'와 같은 요소가 강하게 나타났으나, 일부 작품에서는 강렬한 위협이나 불안(공포, 살인예고 등)이 묘사되기도 했다. 집단 4는 전체적으로 긍정적이고 안정적이며, 온화한 감성이 두드러졌다. 극단적으로 격렬하거나 부정적인 감정보다는 균형 잡힌, 따뜻한 감정이 강조되어 있었다. 집단 5에서는 '공포' 감정이 집약적으로 나타났다. 마지막으로 집단 6은 파란색 배경에 인물을 강조하는 디자인이 반복되어, 색채와 레이아웃 모두에서 일관된 시각적 경향성을 확인할 수 있었다.
+                </p>
+              </div>
+              
+              <h3>태그 출현 빈도 분석</h3>
+              <p>
+                태그 출현 빈도 분석 결과, 상위 10개 태그는 '<span className="highlight">#소설원작</span>', '<span className="highlight">#먼치킨</span>', '<span className="highlight">#액션</span>', '<span className="highlight">#판타지</span>', '<span className="highlight">#무협/사극</span>', '<span className="highlight">#드라마</span>', '<span className="highlight">#사이다</span>', '<span className="highlight">#자극적인</span>', '<span className="highlight">#복수극</span>', '<span className="highlight">#로맨스</span>' 순으로 나타났다.
+              </p>
+                              <p>
+                  특히 '<span className="highlight">#소설원작</span>'은 44회로 압도적으로 많이 등장했으며, 이는 완성도와 신뢰성, 결말에 대한 기대감 등 독자의 긍정적 기대 심리가 반영된 결과로 볼 수 있다. '<span className="highlight">#먼치킨</span>', '<span className="highlight">#액션</span>', '<span className="highlight">#판타지</span>', '<span className="highlight">#사이다</span>', '<span className="highlight">#복수극</span>' 등도 대리만족, 극적인 전개, 강렬한 감정 유발을 통해 웹툰의 흥미 요소를 극대화하는 공통점이 있다.
+                </p>
+              
+              <h3>종합 분석 및 시사점</h3>
+              <p>
+                이상의 결과는 웹툰이 단순히 장르별로만 분류되지 않으며, 태그 및 표지 감정 네트워크를 통해 다층적인 공통점과 특성이 드러남을 시사한다. 특정 장르와 감정이 교차하는 집단, 그리고 반복적으로 등장하는 색채와 태그가 독자들에게 강한 인상과 선호를 불러일으키고 있음을 확인할 수 있었다.
+              </p>
+              <p>
+                이러한 분석은 향후 웹툰 기획, 시각적 마케팅, 그리고 독자 타깃팅 전략 수립에 실질적인 시사점을 제공한다.
+              </p>
             </div>
           </section>
 
