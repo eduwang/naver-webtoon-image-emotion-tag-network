@@ -838,6 +838,44 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
           <div className="clusters-grid">
             {clusters.map((cluster, clusterIndex) => {
               const clusterColors = getClusterColors(clusters.length);
+              
+              // 집단 이름 매핑 (태그 기반 vs 감정 기반 구분)
+              const getClusterName = (index, totalClusters) => {
+                // 태그 기반 집단 (8개)
+                const tagClusterNames = [
+                  "자극 혼합형",
+                  "액션·사이다형", 
+                  "무협·사극 액션형",
+                  "판타지 서사형",
+                  "액션 판타지형",
+                  "일상 힐링형",
+                  "현실 드라마형",
+                  "로맨스형"
+                ];
+                
+                // 감정 기반 집단 (6개)
+                const emotionClusterNames = [
+                  "중립·거리감형",
+                  "권위·판타지형", 
+                  "미스터리형",
+                  "안정혼합형",
+                  "공포·스릴러형",
+                  "청색 몰입형"
+                ];
+                
+                // 데이터 타입에 따라 집단 이름 선택
+                // title에 "감정"이 포함되어 있으면 감정 기반으로 판단
+                const isEmotionBased = title.includes("감정");
+                
+                if (isEmotionBased && index < emotionClusterNames.length) {
+                  return `집단 ${index + 1} - ${emotionClusterNames[index]}`;
+                } else if (!isEmotionBased && index < tagClusterNames.length) {
+                  return `집단 ${index + 1} - ${tagClusterNames[index]}`;
+                } else {
+                  return `집단 ${index + 1}`;
+                }
+              };
+              
               return (
                 <div key={clusterIndex} className="cluster-item">
                   <div className="cluster-header">
@@ -845,7 +883,7 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
                       className="cluster-color" 
                       style={{ backgroundColor: clusterColors[clusterIndex] }}
                     ></span>
-                    <span className="cluster-name">집단 {clusterIndex + 1}</span>
+                    <span className="cluster-name">{getClusterName(clusterIndex, clusters.length)}</span>
                     <span className="cluster-count">({cluster.length}개 노드)</span>
                   </div>
                   <div className="cluster-nodes">
@@ -1112,7 +1150,7 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
                               ${tags.length > 0 ? `
                                 <div class="tooltip-tags">
                                   <strong>태그:</strong><br>
-                                  ${tags.map(tag => `<span class="tag">#${tag}</span>`).join(' ')}
+                                  ${tags.map(tag => `<span class="tooltip-tag">#${tag}</span>`).join(' ')}
                                 </div>
                               ` : ''}
                               ${Object.keys(emotions).length > 0 ? `

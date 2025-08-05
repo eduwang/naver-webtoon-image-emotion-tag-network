@@ -11,15 +11,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [showWebtoonClusters, setShowWebtoonClusters] = useState(false);
   const [showEmotionClusters, setShowEmotionClusters] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
 
-  const handleCarouselNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % 2);
-  };
-
-  const handleCarouselPrev = () => {
-    setCurrentSlide((prev) => (prev - 1 + 2) % 2);
-  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -50,7 +42,7 @@ function App() {
             <h3 className="camp-title">2025 시흥 이공계 창의융합 진로캠프</h3>
             <p className="professor-info">유연주 교수님 팀</p>
           </div>
-          <h1 className="title">네이버 웹툰 이미지 감정 태그 네트워크 분석</h1>
+          <h1 className="title">웹툰 데이터 관계망 기반 시각적 정서 탐구: 색채와 감정 사이의 관계를 중심으로</h1>
         </div>
       </header>
 
@@ -253,114 +245,82 @@ function App() {
             <h2 className="section-title">연구 결과</h2>
             <div className="content">
               <h3>등장 태그 빈도수 Top 10</h3>
-              <div className="top-tags-container">
-                <div className="carousel-container">
-                  <button className="carousel-btn prev-btn" onClick={() => handleCarouselPrev()}>
-                    <span>‹</span>
-                  </button>
-                  
-                  <div className="carousel-wrapper">
-                    <div className="carousel-track" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-                      <div className="carousel-slide">
-                        <div className="slide-content">
-                          <div className="tags-row">
-                            <div className="carousel-tag-card">
-                              <div className="rank-badge">1</div>
-                              <div className="tag-info">
-                                <div className="carousel-tag-name">소설원작</div>
-                                <div className="tag-count">44회</div>
-                              </div>
-                            </div>
-                            <div className="carousel-tag-card">
-                              <div className="rank-badge">2</div>
-                              <div className="tag-info">
-                                <div className="carousel-tag-name">먼치킨</div>
-                                <div className="tag-count">32회</div>
-                              </div>
-                            </div>
-                            <div className="carousel-tag-card">
-                              <div className="rank-badge">3</div>
-                              <div className="tag-info">
-                                <div className="carousel-tag-name">액션</div>
-                                <div className="tag-count">30회</div>
-                              </div>
-                            </div>
-                            <div className="carousel-tag-card">
-                              <div className="rank-badge">4</div>
-                              <div className="tag-info">
-                                <div className="carousel-tag-name">판타지</div>
-                                <div className="tag-count">29회</div>
-                              </div>
-                            </div>
-                            <div className="carousel-tag-card">
-                              <div className="rank-badge">5</div>
-                              <div className="tag-info">
-                                <div className="carousel-tag-name">무협/사극</div>
-                                <div className="tag-count">24회</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+              <div className="tags-table-container">
+                <div className="tags-table">
+                  <div className="tags-row">
+                    <div className="tag-item">
+                      <div className="rank-badge">1</div>
+                      <div className="tag-info">
+                        <div className="tag-name">소설원작</div>
+                        <div className="tag-count">44회</div>
                       </div>
-                      
-                      <div className="carousel-slide">
-                        <div className="slide-content">
-                          <div className="tags-row">
-                            <div className="carousel-tag-card">
-                              <div className="rank-badge">6</div>
-                              <div className="tag-info">
-                                <div className="carousel-tag-name">드라마</div>
-                                <div className="tag-count">23회</div>
-                              </div>
-                            </div>
-                            <div className="carousel-tag-card">
-                              <div className="rank-badge">7</div>
-                              <div className="tag-info">
-                                <div className="carousel-tag-name">사이다</div>
-                                <div className="tag-count">18회</div>
-                              </div>
-                            </div>
-                            <div className="carousel-tag-card">
-                              <div className="rank-badge">8</div>
-                              <div className="tag-info">
-                                <div className="carousel-tag-name">자극적인</div>
-                                <div className="tag-count">17회</div>
-                              </div>
-                            </div>
-                            <div className="carousel-tag-card">
-                              <div className="rank-badge">8</div>
-                              <div className="tag-info">
-                                <div className="carousel-tag-name">복수극</div>
-                                <div className="tag-count">17회</div>
-                              </div>
-                            </div>
-                            <div className="carousel-tag-card">
-                              <div className="rank-badge">10</div>
-                              <div className="tag-info">
-                                <div className="carousel-tag-name">로맨스</div>
-                                <div className="tag-count">16회</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                    </div>
+                    <div className="tag-item">
+                      <div className="rank-badge">2</div>
+                      <div className="tag-info">
+                        <div className="tag-name">먼치킨</div>
+                        <div className="tag-count">32회</div>
+                      </div>
+                    </div>
+                    <div className="tag-item">
+                      <div className="rank-badge">3</div>
+                      <div className="tag-info">
+                        <div className="tag-name">액션</div>
+                        <div className="tag-count">30회</div>
+                      </div>
+                    </div>
+                    <div className="tag-item">
+                      <div className="rank-badge">4</div>
+                      <div className="tag-info">
+                        <div className="tag-name">판타지</div>
+                        <div className="tag-count">29회</div>
+                      </div>
+                    </div>
+                    <div className="tag-item">
+                      <div className="rank-badge">5</div>
+                      <div className="tag-info">
+                        <div className="tag-name">무협/사극</div>
+                        <div className="tag-count">24회</div>
                       </div>
                     </div>
                   </div>
-                  
-                  <button className="carousel-btn next-btn" onClick={() => handleCarouselNext()}>
-                    <span>›</span>
-                  </button>
-                </div>
-                
-                <div className="carousel-dots">
-                  <button 
-                    className={`dot ${currentSlide === 0 ? 'active' : ''}`} 
-                    onClick={() => setCurrentSlide(0)}
-                  ></button>
-                  <button 
-                    className={`dot ${currentSlide === 1 ? 'active' : ''}`} 
-                    onClick={() => setCurrentSlide(1)}
-                  ></button>
+                  <div className="tags-row">
+                    <div className="tag-item">
+                      <div className="rank-badge">6</div>
+                      <div className="tag-info">
+                        <div className="tag-name">드라마</div>
+                        <div className="tag-count">23회</div>
+                      </div>
+                    </div>
+                    <div className="tag-item">
+                      <div className="rank-badge">7</div>
+                      <div className="tag-info">
+                        <div className="tag-name">사이다</div>
+                        <div className="tag-count">18회</div>
+                      </div>
+                    </div>
+                    <div className="tag-item">
+                      <div className="rank-badge">8</div>
+                      <div className="tag-info">
+                        <div className="tag-name">자극적인</div>
+                        <div className="tag-count">17회</div>
+                      </div>
+                    </div>
+                    <div className="tag-item">
+                      <div className="rank-badge">9</div>
+                      <div className="tag-info">
+                        <div className="tag-name">복수극</div>
+                        <div className="tag-count">17회</div>
+                      </div>
+                    </div>
+                    <div className="tag-item">
+                      <div className="rank-badge">10</div>
+                      <div className="tag-info">
+                        <div className="tag-name">로맨스</div>
+                        <div className="tag-count">16회</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -409,12 +369,19 @@ function App() {
             <h2 className="section-title">결론</h2>
             <div className="content">
               <p>
-                본 연구를 통해 네이버 웹툰의 이미지에서 나타나는 감정적 특성을 
-                네트워크 분석으로 시각화하고 분석할 수 있었습니다.
+                이 연구는 색채가 인간의 감정에 미치는 영향을 분석하고, 색상이 감정 표현과 어떻게 연결되는지를 탐구하였다. 웹툰에서 색채는 작품의 분위기와 감정을 전달하는 중요한 시각적 요소로, 따뜻한 색조는 안정감과 친근함을, 차가운 색조는 거리감과 차분함을 전달한다. 색상은 장르에 따라 감정적 특성을 강조하는 역할을 한다.
               </p>
+              
               <p>
-                향후 연구에서는 더 많은 웹툰 데이터를 수집하여 
-                더 정확한 패턴 분석을 진행할 예정입니다.
+                이 연구는 색채와 감정 간의 관계를 데이터 기반으로 분석하고, 색상이 감정적 경험을 어떻게 형성하는지 구조적으로 이해할 수 있는 기초 자료를 제공한다. 연구 결과, 색상은 독자에게 직관적으로 작품의 분위기와 정서를 전달하며, 이는 작품 선택에 큰 영향을 미친다.
+              </p>
+              
+              <p>
+                예를 들어, 액션이나 판타지 장르는 긴장감과 에너지 유도하기 위해 파란색이나 빨간색 같은 짙은 색채를 주로 사용하며, 일상물이나 힐링 장르는 차분함과 안정감을 유도하기 위해 밝은 색이나 연한 색을 주로 사용함을 확인하였다. 웹툰의 태그 네트워크 분석을 통해, <span className="highlight">#소설원작</span> 태그는 신뢰도를 높이고, <span className="highlight">#먼치킨</span>과 <span className="highlight">#액션</span> 태그는 독자에게 흥미와 대리만족을 제공함을 알았다.
+              </p>
+              
+              <p>
+                결론적으로, 색채는 웹툰의 감정 전달을 강화하고 장르 특성을 반영하는 중요한 수단이다. 이 연구는 색채와 감정의 관계를 이해하는 데 중요한 기초 자료를 제공하며, 향후 웹툰 기획과 마케팅 전략에 실질적인 기여를 할 수 있다.
               </p>
             </div>
           </section>
