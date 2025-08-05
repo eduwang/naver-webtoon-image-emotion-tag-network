@@ -644,28 +644,30 @@
   }
   
   .cluster-node-tooltip .emotion-list {
-    margin-top: 8px;
+    margin-top: 6px;
   }
   
   .cluster-node-tooltip .emotion-item {
     display: flex;
     align-items: center;
     margin-bottom: 1px;
-    gap: 8px;
+    gap: 4px;
+    padding: 1px 0;
+    background-color: black;
   }
   
   .cluster-node-tooltip .emotion-name {
-    flex: 0 0 80px;
-    font-size: 10px;
+    flex: 0 0 60px;
+    font-size: 8px;
     color: #ccc;
     text-align: right;
   }
   
   .cluster-node-tooltip .emotion-bar {
     flex: 1;
-    height: 8px;
+    height: 4px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
+    border-radius: 2px;
     overflow: hidden;
     position: relative;
   }
@@ -678,8 +680,8 @@
   }
   
   .cluster-node-tooltip .emotion-value {
-    flex: 0 0 35px;
-    font-size: 10px;
+    flex: 0 0 25px;
+    font-size: 8px;
     color: #03c75a;
     font-weight: bold;
     text-align: right;

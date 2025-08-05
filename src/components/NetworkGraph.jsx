@@ -1177,17 +1177,10 @@ const NetworkGraph = ({ data, title, height = 500, showClusters = false, onClust
                               ` : ''}
                             `;
                             
-                            // 툴팁 스타일 설정
+                            // 툴팁 스타일 설정 - CSS 클래스 사용
                             tooltip.style.cssText = `
                               position: absolute;
-                              background: rgba(0, 0, 0, 0.95);
-                              color: white;
-                              padding: 15px;
-                              border-radius: 8px;
-                              font-size: 12px;
-                              max-width: 300px;
                               z-index: 10000;
-                              box-shadow: 0 4px 20px rgba(0,0,0,0.5);
                               pointer-events: none;
                             `;
                             
